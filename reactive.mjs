@@ -68,7 +68,7 @@ export function useState(initial) {
         set(variable, value);
     }]
 }
-export function unboundUseEffect(cb, deps) {
+function unboundUseEffect(cb, deps) {
     // Push the effect to `this.effects` then run `storage.addEffectElement([this, index])`
     // Where index is the index of the effect in this.effects
     const effectAndCleanup = {c: null, v: null};
@@ -87,7 +87,7 @@ export function unboundUseEffect(cb, deps) {
     // We could have replaced cb(...deps) with something like this to ensure it happens later:
     //setTimeout(cb(...deps), 0) // Not sure whether this is necessary though
 }
-function useEffect(cb, deps) {
+export function useEffect(cb, deps) {
     unboundUseEffect(cb, deps);
 }
 function createReactive(initial, callback) {
@@ -240,7 +240,7 @@ export function deref(variable) {
         return variable;
     }
 }
-function cull(variable) {
+export function cull(variable) {
     // Marks a variable as no longer used, instructing all other variables to remove it from their subscriptions next time they update.
     // We only use the prototype to determine whether it has been culled, but we'll clear all these properties to free up memory, just in case one of its dependencies goes a long time without updating (this object can't be GC-d until then, but its properties can be once we delete them)
     delete variable.v;
@@ -248,104 +248,3 @@ function cull(variable) {
     delete variable.s;
     variable.prototype = null;
 }
-
-
-// Tests:
-
-// Composition
-//function multiply(a, b) {
-//    return apply((a, b) => a * b, [a, b]);
-//}
-//[x, setX] = useState(5);
-//[y, setY] = useState(3);
-//var product = multiply(x, y);
-//apply((product) => {
-//    console.log(product);
-//}, [product]); // logs "15"
-//setX(30); // logs "90"
-
-// Collectors
-//const [state1, setState1] = useState(3);
-//const [state2, setState2] = useState(14);
-//apply((x, y) => {
-//    console.log(x + 5 * y);
-//}, [state1, state2]); // logs "73"
-//apply((x) => {
-//    console.log(`State1 = ${x}`);
-//}, [state1]);
-//setState1(state1.v + 2); // logs "75"
-
-// Apply with cleanup (also multivariable set() function)
-//const [state, setState] = useState(0);
-//const [otherState, setOtherState] = useState("hello");
-//apply((state, otherState) => {
-//    console.log(`State = ${state}`);
-//    console.log(`OtherState = ${otherState}`);
-//    return () => {
-//        console.log(`Cleaning up state = ${state}`);
-//        console.log(`Cleaning up otherState = ${otherState}`);
-//    }
-//}, [state, otherState], true); // logs "State = 0", "OtherState = hello"
-//set(state, 1, otherState, "goodbye"); // logs "Cleaning up state = 0", "Cleaning up otherState = hello", "State = 1", "OtherState = goodbye"
-
-// useEffect with cleanup
-//const [state, setState] = useState(0);
-//const [otherState, setOtherState] = useState(100);
-//const obj = {
-//    effects: [],
-//    cleanup() {
-//        for (let effect of this.effects) {
-//            if (typeof(effect.v) === "function") {
-//                effect.v();
-//            }
-//        }
-//    },
-//    render() {
-//        useEffect((state) => {
-//            console.log(state);
-//            return () => {
-//                console.log(`Cleaning up ${state}`);
-//            }
-//        }, [state]); // logs "0"
-//    }
-//}
-//const otherObj = {
-//    effects: [],
-//    cleanup() {
-//        for (let effect of this.effects) {
-//            if (typeof(effect.v) === "function") {
-//                effect.v();
-//            }
-//        }
-//    },
-//    render() {
-//        useEffect((otherState) => {
-//            console.log(otherState);
-//            return () => {
-//                console.log(`Cleaning up ${otherState}`);
-//            }
-//        }, [otherState]); // logs "0"
-//    }
-//}
-
-//useEffect = unboundUseEffect.bind(obj);
-//obj.render();
-//storage.runEffects();
-
-//useEffect = unboundUseEffect.bind(otherObj);
-//otherObj.render();
-//storage.runEffects();
-
-//setState(4); // logs "Cleaning up 0", "4"
-//setOtherState(55);
-
-//obj.cleanup(); // logs "Cleaning up 4"
-
-// Culling
-//const [state, setState] = useState(0);
-//const statePlusOne = apply(state => state + 1, [state]);
-//console.log(state);
-//cull(statePlusOne);
-//console.log(state);
-//setState(3);
-//console.log(state);
