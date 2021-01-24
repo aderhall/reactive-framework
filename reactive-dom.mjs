@@ -67,9 +67,8 @@ export default {
             // This can use the stored element node property
             console.log(`Tearing down ${element.node} (${element.type}) from ${parent.type}`);
             console.log(`Tearing down children of ${element.type}`);
-            console.log(element.props.children);
             for (let child of element.props.children) {
-                console.log(child)
+                //console.log(child)
                 this.tearDown(child);
             }
         } else if (isReactive(element)) {
@@ -81,7 +80,7 @@ export default {
             // The worst-case scenario for memory here would be if we create a bajillion little components each dependent on some state, and then unrender them all at once and leave the setState refenence in some seldom-called event listener. Until that listener fires, there will be a bajillion little empty objects clogging up the memory.
             
             // Fire the teardown function for this element (no need for arguments since these are boxed in at render time)
-            element.s[0[0]].v();
+            element.s[0][0].v();
             // This does all the steps of marking an element as deleted
             cull(element);
         } else {

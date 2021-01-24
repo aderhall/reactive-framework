@@ -71,10 +71,14 @@ function App(props) {
                 return Reactive.createElement(Modal);
             } else {
                 return Reactive.createElement(
-                    "warning",
-                    {className: "no-modal"},
+                    "div",
+                    {className: "Warning"},
                     apply((headerTitle) => {
-                        return `No modal is being displayed and the headerTitle is ${headerTitle}`;
+                        return Reactive.createElement(
+                            "p",
+                            {className: "Warning__text"},
+                            `No modal is being displayed and the headerTitle is ${headerTitle}`
+                        );
                     }, [headerTitle])
                 )
             }
