@@ -20,21 +20,21 @@ export default {
     setAttr(node, key, value) {
         // Sets the attribute of a given node. May change to just creating the node with all of its attributes each time
         apply((value) => {
-            node[key] = value;
-            //return () => { WARNING: REMEMBER TO SET APPLY CALLBACK RETURN TO TRUE IF WE USE THIS!!!
-            //    this.log(`Unset ${node.type}.${key} from `, value);
-            //}
-        }, [value]);
+            this.log(`Set ${node.type}.${key} to `, value);
+            return () => {
+                this.log(`Unset ${node.type}.${key} from `, value);
+            }
+        }, [value], true);
     },
-    renderProps(props, element) {
-        // Iterates over props and sets them as attributes to the DOM node of a given element
+    renderProps(props, node) {
+        // Iterates over props and sets them as attributes to a given DOM node
         for (let [key, value] of Object.entries(props)) {
-            if (key === "children") {
-            //} else if (key.slice(0, 2) === "on" && key[2] === key[2].toUpperCase()) {
-            } else if (key === "className") { // ...or anything else that is meant to be kept camelCase
-                this.setAttr(element.node, key, value)
-            } else {
-                this.setAttr(element.node, key.toLowerCase(), value);
+            if (key !== "children") {
+                if (key === "className") {
+                    this.setAttr(node, "class", value);
+                } else {
+                    this.setAttr(node, key.toLowerCase(), value);
+                }
             }
         }
     },
@@ -46,13 +46,18 @@ export default {
             this.setAttr(parent, "innerHTML", element)
         } else if (typeof(element.type) === "string") {
             // TODO: Assign the result of creating the element to the element's node property (this will be visible in the cleanup function since the cleanup has a reference to element)
-            element.node = document.createElement(element.type);
-            parent.node.appendChild(element.node);
+            element.node = `<${element.type}>`;
+            this.log(`<${element.type}>    <---- ${parent.type}`);
             this.renderProps(element.props, element);
             if (element.props.children.length > 0) {
+                this.log(`Children:`);
+                this.tabIndex ++;
                 for (let child of element.props.children) {
+                    // TODO: render each item of an array child
+                    
                     this.renderRecursive(child, element);
                 }
+                this.tabIndex --;
             }
         } else {
             // We need to change the identity of global useEffect to a bound function referring to this element. This will allow useEffect to store its effects in the element, which is useful during teardown since we can run all the cleanups for just this element:
@@ -65,11 +70,13 @@ export default {
     },
     tearDown(element, parent) {
         if (element === undefined) {
-            //console.log("Previous element value was undefined, nothing to tear down");
+            console.log("Previous element value was undefined, nothing to tear down");
         } else if (typeof(element) === "string") {
-            //console.log(`No need to unset innerHTML from ${element}`);
+            console.log(`No need to unset innerHTML from ${element}`);
         } else if (typeof(element.type) === "string") {
-            element.node.remove();
+            // This can use the stored element node property
+            console.log(`Tearing down ${element.node} (${element.type}) from ${parent.type}`);
+            console.log(`Tearing down children of ${element.type}`);
             for (let child of element.props.children) {
                 //console.log(child)
                 this.tearDown(child);
@@ -104,7 +111,6 @@ export default {
     renderRecursive(element, parent) {
         // This only exists because we need to run effects after every render (hence a separate render and renderRecursive function: render only runs once per app, renderRecursive runs once per element)
         // TODO: render fragments
-        // TODO: render each item of an array child
         if (isReactive(element)) {
             console.log("Reactive element:")
             console.log(element);

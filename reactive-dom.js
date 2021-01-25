@@ -1,8 +1,4 @@
-"use strict";
-import {apply, isReactive, cull, storage, bindUE} from "./reactive.mjs";
-// Reactive DOM
-
-export default {
+const ReactiveDom = {
     // For development, not intended to be used in the near future
     tabIndex: 0,
     log(...args) {
@@ -47,11 +43,11 @@ export default {
         } else if (typeof(element.type) === "string") {
             // TODO: Assign the result of creating the element to the element's node property (this will be visible in the cleanup function since the cleanup has a reference to element)
             element.node = document.createElement(element.type);
-            parent.node.appendChild(element.node);
+            parent.appendChild(element.node);
             this.renderProps(element.props, element);
             if (element.props.children.length > 0) {
                 for (let child of element.props.children) {
-                    this.renderRecursive(child, element);
+                    this.renderRecursive(child, element.node);
                 }
             }
         } else {
@@ -123,27 +119,3 @@ export default {
         storage.runEffects();
     }
 }
-
-//Object.entries(props).reduce((prev, current) => prev + ' ' + current[0] + '="' + current[1] + '"', "")
-
-
-// If a conditionally rendered component contains another conditionally rendered component:
-// If the contained component is rendered based on the container component's state, then when the container component is unrendered, it will tear down all of its children. One of these children is the reactive variable containing the contained component's current element. 
-
-
-
-//function createCallback(cb, deps) {
-//    return () => cb(...deps)
-//}
-
-//createCallback(
-//    (x) => setHeaderTitle(x),
-//    [
-//        apply((headerTitle) => ((headerTitle === "Recipes") ? "Saved": "Recipes"), [headerTitle])
-//    ]
-//)
-
-//{onClick: (() => {
-//    const modified = apply((headerTitle) => ((headerTitle === "Recipes") ? "Saved": "Recipes"), [headerTitle]);
-//    return () => setHeaderTitle(modified)
-//})(),}

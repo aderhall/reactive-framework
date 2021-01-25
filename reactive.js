@@ -1,9 +1,9 @@
 "use strict";
 
-export function isReactive(variable) {
+function isReactive(variable) {
     return (variable === undefined || variable === null ) ? false : variable.prototype === storage.R;
 }
-export const storage = {
+const storage = {
     collectors: [],
     addCollector(collector) {
         if (this.collectors.indexOf(collector) === -1) {
@@ -53,7 +53,7 @@ export const storage = {
     },
     R: {}
 }
-export const Reactive = {
+const Reactive = {
     createElement(component, props, ...children) {
         return {
             props: props ? {...props, children: children} : null, // Any of these could be reactive variables
@@ -62,7 +62,7 @@ export const Reactive = {
         }
     }
 }
-export function useState(initial) {
+function useState(initial) {
     // const [state, setState] = useReactive(5);
     const variable = createReactive(initial);
     return [variable, (value) => {
@@ -88,11 +88,11 @@ function unboundUseEffect(cb, deps) {
     // We could have replaced cb(...deps) with something like this to ensure it happens later:
     //setTimeout(cb(...deps), 0) // Not sure whether this is necessary though
 }
-export function bindUE(element) {
+function bindUE(element) {
     // Changes the identity of useEffect to bind it to a specific element
     useEffect = unboundUseEffect.bind(element);
 }
-export let useEffect = (cb, deps) => {
+let useEffect = (cb, deps) => {
     console.log("Error, attempting to call useEffect before it has been bound!");
     //unboundUseEffect(cb, deps);
 }
@@ -111,7 +111,7 @@ function createReactive(initial, callback) {
     result.prototype = storage.R;
     return result;
 }
-export function apply(cb, deps, returnCleanup) {
+function apply(cb, deps, returnCleanup) {
     if (deps === undefined) {
         return cb();
     }
@@ -196,7 +196,7 @@ function applyCollector(cb, deps, returnCleanup) {
     collector.v = collector.c(...collector.d);
     return collector;
 }
-export function set(...args) {
+function set(...args) {
     // Assign but takes multiple inputs and updates collectors when done
     if (args.length % 2 == 1) {
         throw RangeError("set() must take an even number of arguments");
@@ -239,14 +239,14 @@ function assign(variable, value) {
         variable = dereferencedValue;
     }
 }
-export function deref(variable) {
+function deref(variable) {
     if (isReactive(variable)) {
         return variable.v;
     } else {
         return variable;
     }
 }
-export function cull(variable) {
+function cull(variable) {
     // Marks a variable as no longer used, instructing all other variables to remove it from their subscriptions next time they update.
     // We only use the prototype to determine whether it has been culled, but we'll clear all these properties to free up memory, just in case one of its dependencies goes a long time without updating (this object can't be GC-d until then, but its properties can be once we delete them)
     delete variable.v;

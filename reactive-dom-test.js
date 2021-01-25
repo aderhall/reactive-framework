@@ -1,8 +1,3 @@
-import ReactiveDOM from "./reactive-dom.mjs";
-import * as ReactivePKG from "./reactive.mjs";
-const { Reactive, useState, apply } = ReactivePKG;
-
-
 function Header(props) {
     return Reactive.createElement(
         "div",
@@ -40,10 +35,9 @@ function Modal(props) {
     )
 }
 
-const [headerTitle, setHeaderTitle] = useState("Recipes");
-const [modalOpen, setModalOpen] = useState(false);
-
 function App(props) {
+    const [headerTitle, setHeaderTitle] = useState("Recipes");
+    const [modalOpen, setModalOpen] = useState(false);
     return Reactive.createElement(
         "div",
         {className: "App"},
@@ -55,7 +49,8 @@ function App(props) {
             "button",
             {
                 onClick: () => setHeaderTitle((deref(headerTitle) === "Recipes") ? "Saved" : "Recipes")
-            }
+            },
+            apply((headerTitle) => (headerTitle === "Recipes") ? "Saved" : "Recipes", [headerTitle])
         ),
         Reactive.createElement(
             Article,
@@ -86,26 +81,4 @@ function App(props) {
     )
 }
 
-function List(props) {
-    return Reactive.createElement(
-        "ul",
-        {className: "List"},
-        apply((items) => 
-            items.map(item => 
-                Reactive.createElement(
-                    "li",
-                    {className: "List__item"},
-                    item
-                )
-            )
-        , [props.items])
-    )
-}
-
-ReactiveDOM.render(Reactive.createElement(App), {type: "root"});
-console.log("------testing innerHTML------");
-setHeaderTitle("Saved");
-console.log("------testing conditional render: on------");
-setModalOpen(true);
-console.log("------testing conditional render: off------");
-setModalOpen(false);
+ReactiveDom.render(Reactive.createElement(App), document.getElementById("root"));
