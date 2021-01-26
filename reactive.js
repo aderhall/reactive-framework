@@ -1,7 +1,10 @@
 "use strict";
 
 function isReactive(variable) {
-    return (variable === undefined || variable === null ) ? false : variable.prototype === storage.R;
+    return (variable === undefined || variable === null ) ? false : Object.getPrototypeOf(variable) === storage.R;
+}
+function isAlive(variable) {
+    return variable.a === true;
 }
 const storage = {
     collectors: [],
@@ -100,15 +103,11 @@ function createReactive(initial, callback) {
     if (callback === undefined) {
         callback = (x) => {x};
     }
-    const result = {
-        v: initial,
-        s: [],
-        c: callback
-        //valueOf: function() {
-        //    return this.v;
-        //}
-    }
-    result.prototype = storage.R;
+    const result = Object.create(storage.R);
+    result.v = initial;
+    result.s = [];
+    result.c = callback;
+    result.a = true;
     return result;
 }
 function apply(cb, deps, returnCleanup) {
@@ -217,17 +216,17 @@ function assign(variable, value) {
         variable.s = variable.s.filter((subscription) => {
             if (Array.isArray(subscription)) {
                 const [collector, index] = subscription;
-                // If the collector is no longer reactive, that means its prototype has been reset and it is marked for deletion
-                if (isReactive(collector)) {
+                // If the collector is no longer alive, that means it has been culled and is marked for deletion
+                if (isAlive(collector)) {
                     collector.d[index] = variable.v;
                     storage.addCollector(collector);
-                    // Since it's still reactive, keep the subscription
+                    // Since it's still alive, keep the subscription
                     return true;
                 }
                 // If it's not, delete the subscription
                 return false;
             } else {
-                if (isReactive(subscription)) {
+                if (isAlive(subscription)) {
                     assign(subscription, subscription.c(variable.v));
                     // keep the subscription
                     return true;
@@ -252,5 +251,5 @@ function cull(variable) {
     delete variable.v;
     delete variable.c;
     delete variable.s;
-    variable.prototype = null;
+    variable.a = false;
 }

@@ -1,17 +1,12 @@
 const ReactiveDom = {
-    // For development, not intended to be used in the near future
-    tabIndex: 0,
-    log(...args) {
-        // For development, not intended to be used in the near future
-        const tabs = [...Array(this.tabIndex).keys()].reduce((prev, current) => prev + "  |", "");
-        //console.log(...(args.map(item => tabs + item.toString())));
-        console.log(tabs, ...args)
-    },
     setStyle(node, style) {
         // Styles an element at `node` with a given style object
-        for (let [key, value] of Object.entries(style)) {
-            node.style[key] = value;
-        }
+        apply(style => {
+            for (let [key, value] of Object.entries(style)) {
+                //apply(value => {node.style[key] = value }, [value])
+                node.style[key] = value;
+            }
+        }, [style]);
     },
     setAttr(node, key, value) {
         // Sets the attribute of a given node. May change to just creating the node with all of its attributes each time
@@ -24,11 +19,14 @@ const ReactiveDom = {
     },
     renderProps(props, element) {
         // Iterates over props and sets them as attributes to the DOM node of a given element
+        // TODO: Maybe add only one event listener per event type to the document, and just add these callbacks to a global list of events. Or maybe add them to the element similar to useEffect so that we can remove them on teardown? That seems like it would be difficult to manage deletion though – and it seems inefficient to search through the elements looking for a match. Is that how synthetic event bubbling actually works? We just listen for an event on the document and then look through each element for a match? You'd think the browser would be optimized to do that.
         for (let [key, value] of Object.entries(props)) {
             if (key === "children") {
             //} else if (key.slice(0, 2) === "on" && key[2] === key[2].toUpperCase()) {
             } else if (key === "className") { // ...or anything else that is meant to be kept camelCase
                 this.setAttr(element.node, key, value)
+            } else if (key === "style") {
+                this.setStyle(element.node, value);
             } else {
                 this.setAttr(element.node, key.toLowerCase(), value);
             }
@@ -37,7 +35,6 @@ const ReactiveDom = {
     renderConst(element, parent) {
         if (typeof(element) === "undefined") {
             // This means it wasn't conditionally rendered, probably
-            console.log("No need to render an undefined element")
         } else if (typeof(element) === "string") {
             this.setAttr(parent, "innerHTML", element)
         } else if (typeof(element.type) === "string") {
@@ -61,13 +58,12 @@ const ReactiveDom = {
     },
     tearDown(element, parent) {
         if (element === undefined) {
-            //console.log("Previous element value was undefined, nothing to tear down");
+            // Probably a conditionally rendered element being not rendered
         } else if (typeof(element) === "string") {
-            //console.log(`No need to unset innerHTML from ${element}`);
+            // No need to unset innerHTML
         } else if (typeof(element.type) === "string") {
             element.node.remove();
             for (let child of element.props.children) {
-                //console.log(child)
                 this.tearDown(child);
             }
         } else if (isReactive(element)) {
@@ -102,8 +98,6 @@ const ReactiveDom = {
         // TODO: render fragments
         // TODO: render each item of an array child
         if (isReactive(element)) {
-            console.log("Reactive element:")
-            console.log(element);
             apply((element, parent) => {
                 this.renderConst(element, parent);
                 return () => {
@@ -119,3 +113,10 @@ const ReactiveDom = {
         storage.runEffects();
     }
 }
+
+
+// Store the reactive variables that are created inside of an apply() call inside the parent reactive variable. Also store references to their dependencies separately. When we re-render and call apply() internally, if the list of subsidiary variables contains a ref with the same dependencies, we can just re-use this. If not, create a new variable. At the end, the variables that weren't bound to new ones get deleted from their dependencies' subscriptions.
+// WARNING: this might cause more memory issues backwards! The references in the dependency list of the parent variable could be unsafe to hold onto, because if this component doesn't de-render it could keep alive the dependencies? This sounds like an issue because some components might almost never be torn down and so they could keep the dependencies and everything in their subscription lists open indefinitely. This could be even worse than the render objects staying open!
+// Also, what if a nested reactive variable isn't used for rendering? What if it's an intermediary step? Will it even be culled at all?
+
+// Other solution: at render time, briefly capture the variables depended on, then flush these variables, then delete them. That way they don't need to be kept alive during the duration of the component, only at render time. And so culled variables leftover from the previous derender are flushed out. But what if this is never re-rendered? What if we create an element and then never create the exact same one again, but do this over and over, creating more and more unique ones that will never be re-rendered to trigger flush clean up their culled remains?

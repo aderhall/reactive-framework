@@ -31,13 +31,18 @@ function Modal(props) {
     return Reactive.createElement(
         "div",
         {className: "Modal"},
-        "This is a modal"
+        Reactive.createElement(
+            "p",
+            {style: {color: "red", fontFamily: "sans-serif"}},
+            "This is a modal"
+        )
     )
 }
 
 function App(props) {
     const [headerTitle, setHeaderTitle] = useState("Recipes");
     const [modalOpen, setModalOpen] = useState(false);
+    const [items, setItems] = useState([]);
     return Reactive.createElement(
         "div",
         {className: "App"},
@@ -82,3 +87,4 @@ function App(props) {
 }
 
 ReactiveDom.render(Reactive.createElement(App), document.getElementById("root"));
+
