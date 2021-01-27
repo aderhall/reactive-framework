@@ -91,8 +91,9 @@ function assign(reactiveVar, value) {
     // `reactiveVar` must be reactive and value must be non-reactive
     if (isReactive(reactiveVar)) {
         reactiveVar.v = value;
-        // It's important that we iterate over a copy of the list, in case nested variable cleanup leads to the deletion of some subscriptions partway through iteration (which could lead to skipping bugs).
-        for (let subscription in [...reactiveVar.s]) {
+        // It's important that we iterate over a copy of the list, in case nested variable cleanup leads to the deletion of some subscriptions part-way through iteration (which could lead to skipping bugs).
+        // IMPORTANT: the assign() function needs to iterate over a copy of the subscription list, because it's possible that items will be spliced from that list during iteration. When it meets a variable marked as dead, it should ignore it and not worry about unsubscribing it: that has already been taken care of
+        for (let subscription of [...reactiveVar.s]) {
             // Is it a collector or a single-dependency variable?
             if (Array.isArray(subscription)) {
                 // Don't do anything if it's marked as dead
@@ -136,7 +137,7 @@ function withCleanup(reactiveVar, callback) {
         nestedCleanup(reactiveVar);
         
         // Run the cleanup function if there is one
-        if (reactiveVar.r && typeof(reactiveVar.v) === "function") {
+        if (reactiveVar.r && (typeof(reactiveVar.v) === "function")) {
             reactiveVar.v();
         }
         
@@ -176,7 +177,7 @@ function nestedCleanup(reactiveVar) {
         }
         
         // If this is a cleanup-returning variable, run its cleanup function
-        if (nestedVar.r && typeof(reactiveVar.v) === "function") {
+        if (nestedVar.r && (typeof(nestedVar.v) === "function")) {
             nestedVar.v();
         }
     }
@@ -221,7 +222,7 @@ function apply(callback, dependencies, returnCleanup) {
             // It's safe to just use pass in since outputVariable.d.length === 0 guarantees that the dependency list was unmodified by the map
             return callback(...dependencies);
         }
-        outputVariable.c = withCleanup((...reactiveDeps) => {
+        outputVariable.c = withCleanup(outputVariable, (...reactiveDeps) => {
             var index = -1;
             return callback(...dependencies.map(dependency => {
                 // Either supply the actual dependency or the value from the UndecoratedCallback's arguments, depending on whether a placeholder has been left.
@@ -245,12 +246,13 @@ function apply(callback, dependencies, returnCleanup) {
             return callback(...dependencies);
         }
         dependencies[0].s.push(outputVariable);
-        outputVariable.c = withCleanup(callback);
+        outputVariable.c = withCleanup(outputVariable, callback);
         outputVariable.v = outputVariable.c(dependencies[0].v);
         
         if (!storage.isAtRoot()) {
             storage.addVar(outputVariable, dependencies);
         }
+        return outputVariable;
     }
 }
 function set(...args) {
@@ -284,5 +286,3 @@ let useEffect = (cb, deps) => {
     console.log("Error, attempting to call useEffect before it has been bound!");
     //unboundUseEffect(cb, deps);
 }
-
-// IMPORTANT: the assign() function needs to iterate over a copy of the subscription list, because it's possible that items will be spliced from that list during iteration. When it meets a variable marked as dead, it should ignore it and not worry about unsubscribing it: that has already been taken care of
