@@ -181,6 +181,7 @@ function applyCollector(cb, deps, returnCleanup) {
         const args = [];
         // deps is not a parameter so it is closured into the callback
         for (let dep of deps) {
+            // BUG: ALERT ALERT RED ALERT this is causing circular references and thus memory leaks in browsers with naive garbage collecting!!!!! This is because deps contains references to one or more reactive variables and is being boxed into the callback as a reference... so this variable has a reference to the callback which has a reference to deps array which has a reference to the dependency sources which have references to their subscription lists which have references to this variable! It's a giant loop of IE doom! I'm pretty sure this is fixed in the new version of apply though because I map the dependency list into one with no reactive variables (replacing them with placeholders) and then detect the placeholder instead of using isReactive()
             if (isReactive(dep)) {
                 args.push(params[index]);
                 index ++;
