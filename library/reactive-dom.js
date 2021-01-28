@@ -29,6 +29,9 @@ const ReactiveDom = {
         // Iterates over props and sets them as attributes to the DOM node of a given element
         // TODO: Maybe add only one event listener per event type to the document, and just add these callbacks to a global list of events. Or maybe add them to the element similar to useEffect so that we can remove them on teardown? That seems like it would be difficult to manage deletion though – and it seems inefficient to search through the elements looking for a match. Is that how synthetic event bubbling actually works? We just listen for an event on the document and then look through each element for a match? You'd think the browser would be optimized to do that.
         for (let [key, value] of Object.entries(props)) {
+            if (value === null || value === undefined) {
+                continue;
+            }
             if (key === "children") {
             //} else if (key.slice(0, 2) === "on" && key[2] === key[2].toUpperCase()) {
             } else if (key === "className") { // ...or anything else that is meant to be kept camelCase

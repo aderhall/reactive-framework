@@ -1,7 +1,7 @@
 const Reactive = {
     createElement(component, props, ...children) {
         return {
-            props: props ? {...props, children: children} : null, // Any of these could be reactive variables
+            props: (props || children) ? {...props, children: children} : null, // Any of these could be reactive variables
             type: component, // Either a string or a function
             effects: [] // List containing the setup-cleanup objects for each effect invoked with useEffect
         }
