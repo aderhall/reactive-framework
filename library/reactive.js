@@ -1,4 +1,4 @@
-const Reactive = {
+export const Reactive = {
     createElement(component, props, ...children) {
         return {
             props: (props || children) ? {...props, children: children} : null, // Any of these could be reactive variables
@@ -63,8 +63,11 @@ const storage = {
         this.effects = [];
     }
 }
+export function runEffects() {
+    storage.runEffects();
+}
 // For creating and managing reactive variables
-function createReactive(initial, callback, returnCleanup) {
+export function createReactive(initial, callback, returnCleanup) {
     if (callback === undefined) {
         callback = (x) => {x};
     }
@@ -77,10 +80,10 @@ function createReactive(initial, callback, returnCleanup) {
     result.a = true; // Whether the variable is alive (if a is set to false, it means this variable is in the process of being cleaned up for deletion and should be ignored)
     return result;
 }
-function isReactive(variable) {
+export function isReactive(variable) {
     return (variable === undefined || variable === null ) ? false : Object.getPrototypeOf(variable) === storage.R;
 }
-function isAlive(reactiveVar) {
+export function isAlive(reactiveVar) {
     // reactiveVar must be a reactive variable!!
     return reactiveVar.a === true;
 }
@@ -126,7 +129,7 @@ function unboundUseEffect(cb, deps) {
         storage.effects.push(effectAndCleanup);
     }, deps);
 }
-function bindUE(element) {
+export function bindUE(element) {
     // Changes the identity of useEffect to bind it to a specific element
     useEffect = unboundUseEffect.bind(element);
 }
@@ -187,7 +190,7 @@ function nestedCleanup(reactiveVar) {
 
 // Front-facing api
 
-function apply(callback, dependencies, returnCleanup) {
+export function apply(callback, dependencies, returnCleanup) {
     // TODO: Allow user to supply their own non-returned cleanup maybe?
     if (!Array.isArray(dependencies)) {
         console.error("Error: apply() must take an array of dependencies as its second argument");
@@ -255,7 +258,7 @@ function apply(callback, dependencies, returnCleanup) {
         return outputVariable;
     }
 }
-function set(...args) {
+export function set(...args) {
     // Assign but takes multiple inputs and updates collectors when done
     if (args.length % 2 == 1) {
         throw RangeError("set() must take an even number of arguments");
@@ -267,7 +270,7 @@ function set(...args) {
         storage.runEffects();
     }
 }
-function deref(variable) {
+export function deref(variable) {
     if (isReactive(variable)) {
         return variable.v;
     } else {
@@ -276,13 +279,13 @@ function deref(variable) {
 }
 
 // "Hooks" – these are not really special as "hooks" but they emulate functionality of specific react hooks
-function useState(initial) {
+export function useState(initial) {
     const variable = createReactive(initial);
     return [variable, (value) => {
         set(variable, value);
     }];
 }
-let useEffect = (cb, deps) => {
+export let useEffect = (cb, deps) => {
     console.log("Error, attempting to call useEffect before it has been bound!");
     //unboundUseEffect(cb, deps);
 }

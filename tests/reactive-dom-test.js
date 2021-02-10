@@ -1,3 +1,6 @@
+import {Reactive, apply, set, useState, deref} from '../library/reactive.js';
+import ReactiveDOM from "../library/reactive-dom.js";
+
 function Header(props) {
     return Reactive.createElement(
         "div",
@@ -11,26 +14,36 @@ function Header(props) {
             "button",
             {
                 className: "Button",
-                onClick: () => set(props.title, (deref(props.title) === "Recipes") ? "Saved" : "Recipes")
+                onClick: () => {
+                    set(props.title, (deref(props.title) === "Recipes") ? "Saved" : "Recipes");
+                }
             },
-            apply((title) => "Go to " + ((title === "Recipes") ? "Saved" : "Recipes"), [props.title])
+            apply((title) => "Go to " + ((title === "Recipes") ? "Saved" : "Articles"), [props.title])
         )
     )
 }
 
+const [articles, setArticles] = useState([
+    ["", ""],
+    ["How to make a sandwich", "The two surviving Founders of Zion were old men, old with the movement of the train, their high heels like polished hooves against the gray metal of the Villa bespeak a turning in, a denial of the bright void beyond the hull. Strata of cigarette smoke rose from the tiers, drifting until it struck currents set up by the blowers and the robot gardener. He’d taken the drug to blunt SAS, nausea, but the muted purring of the Villa bespeak a turning in, a denial of the bright void beyond the hull. That was Wintermute, manipulating the lock the way it had manipulated the drone micro and the amplified breathing of the Sprawl’s towers and ragged Fuller domes, dim figures moving toward him in the dark. The alarm still oscillated, louder here, the rear wall dulling the roar of the console in faded pinks and yellows."],
+    ["The pros and cons of buying a deep fat frier", "He’d waited in the human system. The Tessier-Ashpool ice shattered, peeling away from the Chinese program’s thrust, a worrying impression of solid fluidity, as though the shards of a broken mirror bent and elongated as they rotated, but it never told the correct time. A narrow wedge of light from a half-open service hatch framed a heap of discarded fiber optics and the chassis of a heroin factory. He woke and found her stretched beside him in the coffin for Armitage’s call. Molly hadn’t seen the dead girl’s face swirl like smoke, to take on the wall between the bookcases, its distorted face sagging to the Tank War, mouth touched with hot gold as a gliding cursor struck sparks from the wall of a broken mirror bent and elongated as they fell. Then a mist closed over the black water and the robot gardener. Sexless and inhumanly patient, his primary gratification seemed to he in his capsule in some coffin hotel, his hands clawed into the shadow of the console. Case had never seen him wear the same suit twice, although his wardrobe seemed to consist entirely of meticulous reconstruction’s of garments of the blowers and the amplified breathing of the fighters."]
+]);
+
 function Article(props) {
+    const title = apply((id, articles) => articles[id][0], [props.id, articles]);
+    const content = apply((id, articles) => articles[id][1], [props.id, articles]);
     return Reactive.createElement(
         "div",
         {className: "Article"},
         Reactive.createElement(
             "h2",
             {className: "Article__title"},
-            props.title
+            title
         ),
         Reactive.createElement(
             "p",
             {className: "Article__body"},
-            ...props.children
+            content
         )
     )
 }
@@ -73,7 +86,7 @@ function Modal(props) {
                     "button",
                     {
                         className: "Text-button",
-                        style: {fontSize: "30px", borderRadius: "50%", width: "30px", height: "30px", lineHeight: "30px"},
+                        style: {fontSize: "40px", borderRadius: "50%", width: "40px", height: "40px", lineHeight: "40px"},
                         onClick: () => {set(props.open, false)}
                     },
                     "×"
@@ -104,9 +117,7 @@ function Modal(props) {
 function App(props) {
     const [headerTitle, setHeaderTitle] = useState("Recipes");
     const [modalOpen, setModalOpen] = useState(false);
-    const [items, setItems] = useState([]);
-    const [content, setContent] = useState("The two surviving Founders of Zion were old men, old with the movement of the train, their high heels like polished hooves against the gray metal of the Villa bespeak a turning in, a denial of the bright void beyond the hull. Strata of cigarette smoke rose from the tiers, drifting until it struck currents set up by the blowers and the robot gardener. He’d taken the drug to blunt SAS, nausea, but the muted purring of the Villa bespeak a turning in, a denial of the bright void beyond the hull. That was Wintermute, manipulating the lock the way it had manipulated the drone micro and the amplified breathing of the Sprawl’s towers and ragged Fuller domes, dim figures moving toward him in the dark. The alarm still oscillated, louder here, the rear wall dulling the roar of the console in faded pinks and yellows.");
-    const [articleTitle, setArticleTitle] = useState("How to Make a Sandwich");
+    const articleID = apply(headerTitle => headerTitle === "Recipes" ? 1 : 2, [headerTitle]);
     return Reactive.createElement(
         "div",
         {className: "App"},
@@ -116,8 +127,7 @@ function App(props) {
         ),
         Reactive.createElement(
             Article,
-            {title: articleTitle},
-            content
+            {id: articleID},
         ),
         Reactive.createElement(
             "div",
@@ -132,29 +142,15 @@ function App(props) {
             Reactive.createElement(
                 Button,
                 {
-                    onClick: () => {setContent(""), setArticleTitle("")},
+                    onClick: () => {let a = deref(articles); a[deref(articleID)] = ["", ""]; setArticles(a)},
                     type: "danger"
                 },
                 "Delete article"
             )
         ),
-        Reactive.createElement(Modal, {open: modalOpen}),
-        apply((modalOpen) => {
-            if (!modalOpen) {
-                return Reactive.createElement(
-                    "div",
-                    {className: "Warning"},
-                    Reactive.createElement(
-                        "p",
-                        {className: "Warning__text"},
-                        "No modal is being displayed and the title is ",
-                        Reactive.createElement("em", null, apply((headerTitle) => `${headerTitle}`, [headerTitle]))
-                    )
-                )
-            }
-        }, [modalOpen])
+        Reactive.createElement(Modal, {open: modalOpen})
     )
 }
 
-ReactiveDom.render(Reactive.createElement(App), document.getElementById("root"));
+ReactiveDOM.render(Reactive.createElement(App), document.getElementById("root"));
 

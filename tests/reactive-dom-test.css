@@ -1,31 +1,54 @@
+html {
+    width: 100vw;
+    height: 100vh;
+    /*background: linear-gradient(-10deg, hsl(42deg 100% 50%), hsl(282deg 100% 50%));
+    background-repeat: no-repeat;*/
+    background-color: #fbfbfb;
+    font-size: 17px;
+}
+
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 16px;
+    font-family: 'Montserrat Alternates', sans-serif;
+}
+
+h1 {
+    font-size: 2rem;
+    margin: 0.6rem 0;
+}
+h2 {
+    font-size: 1.5rem;
+    margin: 0.6rem auto;
 }
 
 .App {
-    width: 60%;
-    margin: auto;
+    max-width: 1000px;
+    box-sizing: border-box;
+    margin: 5vh auto;
+    padding: 20px;
 }
 .App__buttons {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .Header {
     width: 100%;
-    height: 80px;
     border-bottom: 1px solid #444;
     
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+}
+.Header>*:not(:last-child) {
+    margin-right: 1rem;
 }
 
 .Button {
-    padding: 10px;
+    padding: 0.5rem;
     background-color: transparent;
     border: 1px solid #005475;
     border-radius: 3px;
@@ -63,7 +86,7 @@ body {
     border-radius: 5px;
     color: inherit;
     font-family: inherit;
-    font-size: 16px;
+    font-size: inherit;
     cursor: pointer;
     transition: box-shadow 0.2s;
     box-shadow: 0 0 0 0px #005475;
@@ -73,9 +96,13 @@ body {
     box-shadow: 0 0 0 2px #005475a2;
 }
 
+
+.Article {
+    margin-top: 1.5rem;
+}
 .Article__body {
-    font-size: 17px;
-    line-height: 2em;
+    font-size: inherit;
+    line-height: 2rem;
 }
 
 .Warning {
@@ -118,14 +145,17 @@ body {
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 4;
+    
     width: 70vw;
     height: 70vh;
     background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 14px rgb(0 0 0 / 0.5);
+    
     display: flex;
     flex-direction: column;
     padding: 20px 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 14px rgb(0 0 0 / 0.5);
+    overflow: scroll;
 }
 .Modal__header {
     display: flex;
@@ -133,6 +163,15 @@ body {
     align-items: center;
 }
 .Modal__content {
-    line-height: 2em;
+    line-height: 2rem;
     margin: 0;
+}
+
+@media only screen and (max-width: 320px) {
+    html {
+        font-size: 14px;
+    }
+    .App {
+        margin: 5vh auto;
+    }
 }

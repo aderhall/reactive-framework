@@ -1,4 +1,6 @@
-const ReactiveDom = {
+import {runEffects, apply, bindUE, isReactive} from "./reactive.js";
+
+const ReactiveDOM = {
     setStyle(node, style) {
         // Styles an element at `node` with a given style object
         apply(style => {
@@ -122,10 +124,11 @@ const ReactiveDom = {
     },
     render(element, parent) {
         this.renderRecursive(element, parent);
-        storage.runEffects();
+        runEffects();
     }
 }
 
+export default ReactiveDOM;
 
 // Store the reactive variables that are created inside of an apply() call inside the parent reactive variable. Also store references to their dependencies separately. When we re-render and call apply() internally, if the list of subsidiary variables contains a ref with the same dependencies, we can just re-use this. If not, create a new variable. At the end, the variables that weren't bound to new ones get deleted from their dependencies' subscriptions.
 // WARNING: this might cause more memory issues backwards! The references in the dependency list of the parent variable could be unsafe to hold onto, because if this component doesn't de-render it could keep alive the dependencies? This sounds like an issue because some components might almost never be torn down and so they could keep the dependencies and everything in their subscription lists open indefinitely. This could be even worse than the render objects staying open!
