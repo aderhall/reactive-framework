@@ -66,7 +66,7 @@ const ReactiveDOM = {
                     this.renderRecursive(child, element.node);
                 }
             }
-        } else {
+        } else if (typeof(element.type) === "function") {
             // TODO: don't change the identity of useEffect – instead, we can have useEffect store effects to a global buffer (in storage) during render, and then we can collect those into the element afterwards. Or we can store a reference to the currently rendering element in storage, and useEffect can deposit effects there
             // We need to change the identity of global useEffect to a bound function referring to this element. This will allow useEffect to store its effects in the element, which is useful during teardown since we can run all the cleanups for just this element:
             bindUE(element);
@@ -74,6 +74,8 @@ const ReactiveDOM = {
             element.yield = element.type(element.props); // Since this is a functional component, element.type is the render function. I'm just copying React with this one
             // Why are we passing the element's parent instead of this element? Because functional components don't actually produce DOM nodes, so we'll just render it to the last DOM node above us in the tree
             this.renderRecursive(element.yield, parent);
+        } else {
+            console.warn("Got unexpected type of element.type, skipping render: ", element);
         }
     },
     tearDown(element, parent) {
@@ -116,9 +118,13 @@ const ReactiveDOM = {
         // TODO: render fragments
         // TODO: render each item of an array child
         apply((element) => {
-            this.renderElement(element, parent);
-            return () => {
-                this.tearDown(element, parent)
+            if (isReactive(element)) {
+                this.renderRecursive(element, parent);
+            } else {
+                this.renderElement(element, parent);
+                return () => {
+                    this.tearDown(element, parent)
+                }
             }
         }, [element], true);
     },
