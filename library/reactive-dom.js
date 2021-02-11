@@ -47,7 +47,7 @@ const ReactiveDOM = {
     },
     renderElement(element, parent) {
         // element is an object created by Reactive.createElement(), parent is a DOM node that we'll attach element to
-        if (typeof(element) === "undefined") {
+        if (element === undefined || element === null) {
             // This means it wasn't conditionally rendered, probably
         } else if (typeof(element) === "string") {
             // String means innerHTML
@@ -80,7 +80,7 @@ const ReactiveDOM = {
     },
     tearDown(element, parent) {
         // TODO: remove the parent parameter (it doesn't seem to be necessary)
-        if (element === undefined) {
+        if (element === undefined || element === null) {
             // Probably a conditionally rendered element being not rendered
         } else if (typeof(element) === "string") {
             // No need to unset textContent
