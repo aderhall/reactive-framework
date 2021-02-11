@@ -1,5 +1,5 @@
 # reactive-framework
-A javascript framework with a similar API to React that leverages reactive programming to improve efficiency.
+A (WIP) javascript framework with a similar API to React that leverages reactive programming to improve efficiency.
 
 Reactive works by tracking the uses of "state" and "props" variables during render time, then replaying everything once the variable is changed. This avoids the need for diff-checking a virtual DOM, which can improve performance in large, complex applications.
 
