@@ -75,7 +75,7 @@ const ReactiveDOM = {
             // Why are we passing the element's parent instead of this element? Because functional components don't actually produce DOM nodes, so we'll just render it to the last DOM node above us in the tree
             this.renderRecursive(element.yield, parent);
         } else {
-            console.warn("Got unexpected type of element.type, skipping render: ", element);
+            console.error("Got unexpected element to render, skipping: ", element);
         }
     },
     tearDown(element, parent) {
@@ -94,7 +94,9 @@ const ReactiveDOM = {
         } else if (isReactive(element)) {
             // Tearing down a reactive variable is already taken care of by the withCleanup behaviors attached during apply() – all we need to do is tear down any elements below this one in the tree
             this.tearDown(element.v);
-        } else {
+        } else if (Array.isArray(element)) {
+            // Tearing down an array is unnecessary because each child element will tear itself down automatically
+        } else if (typeof(element.type) === "function") {
             // This is a funcitonal component. It might invoke useEffect, so we need to run all of the element's effect cleanups at teardown
             for (let effect of element.effects) {
                 // effect.v contains the result of the callback passed to useEffect(). If the callback returned another callback, we'll use that for cleanup. storage.runEffects() already takes care of cleanup when the effect is re-running, but when we tear down the element we need to run cleanup one last time.
@@ -104,6 +106,8 @@ const ReactiveDOM = {
             }
             // Since it's a functional element, we recursively follow the yield properties until we reach a a non-functional element (remember, yield stores the element produced by the element.type() function)
             this.tearDown(element.yield, parent);
+        } else {
+            console.error("Got unexpected element to tear down: ", element);
         }
     },
     renderRecursive(element, parent) {
