@@ -112,6 +112,7 @@ const ReactiveDOM = {
             - a string (render as text inside the parent element)
             - an object with property type is a string (render a DOM element)
             - an object with property type is a function (render a functional component that produces DOM elements)
+            - a nested reactive variable // TODO: this should be taken care of in apply() (there's an issue on GH about this: #1)
         */
         
         // This "renderRecursive" function only exists because we need to run effects after every render (hence a separate render and renderRecursive function: render only runs once per app, renderRecursive runs once per element)
@@ -120,6 +121,10 @@ const ReactiveDOM = {
         apply((element) => {
             if (isReactive(element)) {
                 this.renderRecursive(element, parent);
+            } else if (Array.isArray(element)) {
+                for (let el of element) {
+                    this.renderRecursive(el, parent);
+                }
             } else {
                 this.renderElement(element, parent);
                 return () => {
