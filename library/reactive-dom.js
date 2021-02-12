@@ -21,7 +21,14 @@ const ReactiveDOM = {
     setAttr(node, key, value) {
         // Sets the attribute of a given node. May change to just creating the node with all of its attributes each time
         apply((value) => {
-            node[key] = value;
+            // TODO: Make this more clean. This if statement is here because sometimes we need setAttribute, like when assigning `width` and `height` properties to SVGs. It might be better to use a list of all possible SVG attributes, rather than of all non-svg attributes like we're doing here
+            if (["className", "textContent", "viewBox"].indexOf(key) > -1 || key.slice(0, 2) === "on") {
+                node[key] = value;
+            } else {
+                //node[key] = value;
+                node.setAttribute(key, value);
+            }
+            
             //return () => { WARNING: REMEMBER TO SET APPLY CALLBACK RETURN TO TRUE IF WE USE THIS!!!
             //    this.log(`Unset ${node.type}.${key} from `, value);
             //}
@@ -45,8 +52,8 @@ const ReactiveDOM = {
             }
         }
     },
-    renderElement(element, parent) {
-        // element is an object created by Reactive.createElement(), parent is a DOM node that we'll attach element to
+    renderElement(element, parent, namespace) {
+        // element is an object created by Reactive.createElement(), parent is a DOM node that we'll attach element to, namespace is an optional variable for the namespace arg of setAttributeNS and createElementNS
         if (element === undefined || element === null) {
             // This means it wasn't conditionally rendered, probably
         } else if (typeof(element) === "string") {
@@ -55,7 +62,16 @@ const ReactiveDOM = {
             this.setAttr(parent, "textContent", element)
         } else if (typeof(element.type) === "string") {
             // Create the element and store it inside the element object for future cleanup purposes
-            element.node = document.createElement(element.type);
+            if ("xmlns" in element.props) {
+                // TODO: BUG: what if xmlns is reactive??
+                namespace = element.props.xmlns;
+                element.node = document.createElementNS(element.props.xmlns, element.type);
+            } else if (namespace === undefined) {
+                element.node = document.createElement(element.type);
+            } else {
+                element.node = document.createElementNS(namespace, element.type);
+            }
+            
             // Add the element to the document
             parent.appendChild(element.node);
             // Render the props to the element
@@ -63,7 +79,7 @@ const ReactiveDOM = {
             // Recursively render each of the element's children, using this element node as the parent
             if (element.props.children.length > 0) {
                 for (let child of element.props.children) {
-                    this.renderRecursive(child, element.node);
+                    this.renderRecursive(child, element.node, namespace);
                 }
             }
         } else if (typeof(element.type) === "function") {
@@ -110,7 +126,7 @@ const ReactiveDOM = {
             console.error("Got unexpected element to tear down: ", element);
         }
     },
-    renderRecursive(element, parent) {
+    renderRecursive(element, parent, namespace) {
         /* Element is a (possibly reactive) variable storing:
             - undefined (don't render anything) // TODO: also allow render null
             - a string (render as text inside the parent element)
@@ -124,14 +140,21 @@ const ReactiveDOM = {
         // TODO: render each item of an array child
         apply((element) => {
             if (isReactive(element)) {
-                this.renderRecursive(element, parent);
+                this.renderRecursive(element, parent, namespace);
             } else if (Array.isArray(element)) {
+                // Array elements must render and tear down each of their members
                 for (let el of element) {
-                    this.renderRecursive(el, parent);
+                    this.renderRecursive(el, parent, namespace);
+                }
+                return () => {
+                    for (let el of element) {
+                        this.tearDown(el, parent);
+                    }
                 }
             } else {
-                this.renderElement(element, parent);
+                this.renderElement(element, parent, namespace);
                 return () => {
+                    // TODO: BUG: Do we need removeElementNS() for svgs?
                     this.tearDown(element, parent)
                 }
             }
