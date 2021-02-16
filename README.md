@@ -5,4 +5,4 @@ Reactive works by tracking the uses of "state" and "props" variables during rend
 
 Currently, every use of a state or props variable must be tracked manually. I might create a babel plugin to add these trackers automatically, converting valid declarative React code into reactive code.
 
-Reactive only works with functional components. It implements hooks like useState to allow stateful behavior.
+Reactive only works with functional components. It implements hooks like useState to provide stateful behavior.
